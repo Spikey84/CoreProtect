@@ -7,8 +7,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -34,7 +37,24 @@ public class PurgeCommand extends Consumer {
         final long seconds = CommandHandler.parseTime(args);
         final int argWid = CommandHandler.parseWorld(args, false, false);
         final List<Integer> argAction = CommandHandler.parseAction(args);
-        final List<Integer> supportedActions = Arrays.asList();
+        final List<Integer> supportedActions = Arrays.asList(0, 10, 4, 11, 8, 6, 7, 3);
+
+        List<Object> argBlocks = CommandHandler.parseRestricted(player, args, argAction);
+        List<Object> argExclude = CommandHandler.parseExcluded(player, args, argAction);
+        List<String> argExcludeUsers = CommandHandler.parseExcludedUsers(player, args);
+
+        List<String> argUsers = CommandHandler.parseUsers(args);
+
+        Chat.sendMessage(player, "Spikey edit works");
+        /*
+        TODO:
+         action
+         block
+         user
+         exclude
+         excludeUser
+
+         */
 
         if (ConfigHandler.converterRunning) {
             Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.UPGRADE_IN_PROGRESS));
@@ -72,14 +92,15 @@ public class PurgeCommand extends Consumer {
                 return;
             }
         }
-        if (player instanceof Player && seconds < 2592000) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.PURGE_MINIMUM_TIME, "30", Selector.FIRST)); // 30 days
-            return;
-        }
-        else if (seconds < 86400) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.PURGE_MINIMUM_TIME, "24", Selector.SECOND)); // 24 hours
-            return;
-        }
+        //removed for testing
+//        if (player instanceof Player && seconds < 2592000) {
+//            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.PURGE_MINIMUM_TIME, "30", Selector.FIRST)); // 30 days
+//            return;
+//        }
+//        else if (seconds < 86400) {
+//            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.PURGE_MINIMUM_TIME, "24", Selector.SECOND)); // 24 hours
+//            return;
+//        }
 
         boolean optimizeCheck = false;
         for (String arg : args) {
@@ -167,7 +188,22 @@ public class PurgeCommand extends Consumer {
                         Database.createDatabaseTables(purgePrefix, true);
                     }
 
-                    List<String> purgeTables = Arrays.asList("sign", "container", "item", "skull", "session", "chat", "command", "entity", "block");
+                    List<String> purgeTables = Lists.newArrayList();
+
+                    if (argAction.size() == 0) {
+                        purgeTables = Arrays.asList("sign", "container", "item", "skull", "session", "chat", "command", "entity", "block");
+                    } else {
+                        //if (argAction.contains(0) || argAction.contains(1)) purgeTables.add("block"); not sure on this one
+                        if (argAction.contains(10)) purgeTables.add("sign");
+                        if (argAction.contains(4)) purgeTables.add("container");
+                        if (argAction.contains(11)) purgeTables.add("item");
+                        if (argAction.contains(8)) purgeTables.add("session");
+                        if (argAction.contains(6)) purgeTables.add("chat");
+                        if (argAction.contains(7)) purgeTables.add("command");
+                        if (argAction.contains(3)) purgeTables.add("entity");
+                    }
+
+
                     List<String> worldTables = Arrays.asList("sign", "container", "item", "session", "chat", "command", "block");
                     List<String> excludeTables = Arrays.asList("database_lock"); // don't insert data into these tables
                     for (String table : ConfigHandler.databaseTables) {
